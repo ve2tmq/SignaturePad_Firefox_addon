@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+  "name": "Signature Injector",
+  "version": "1.0",
+  "description": "Inject a signature onto a web page's canvas.",
+  
+    "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js", "signature_pad.js"]
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "browser_action": {
+    "default_title": "Inject signature",
+    "default_icon": "icon.png"
+  },
+  "web_accessible_resources": ["assets/signature.txt"]
+}
