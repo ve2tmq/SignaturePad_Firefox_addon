@@ -1,6 +1,93 @@
-<meta charset="UTF-8">
-<h2>Signature config</h2>
-<input type="file" id="signatureFile" accept="text/txt, text/gpg">
-<br>
-<img id="preview" style="max-width: 300px; margin-top: 10px; border: 1px solid #ccc;">
-<p id="status" style="font-weight: bold;"></p>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options de l'application de signature</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 24px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563;
+            margin-bottom: 8px;
+        }
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f9fafb;
+            color: #4b5563;
+        }
+        .status-message {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="title">Options pour la signature de formulaire</h1>
+        
+        <!-- Conteneur pour le message d'état -->
+        <div id="statusMessage" class="status-message hidden"></div>
+
+        <!-- Formulaire de sélection des fichiers -->
+        <form id="optionsForm">
+            <div class="form-group">
+                <input type="file" id="signatureFile" name="signatureFile" accept=".txt">
+                <p class="text-sm text-gray-500 mt-1">
+                    Ce fichier doit contenir l'image encodée en Base64.
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <input type="file" id="pgpFile" name="pgpFile" accept=".pgp, .gpg, .asc">
+                <p class="text-sm text-gray-500 mt-1">
+                    Ce fichier doit contenir votre clé OpenPGP.
+                </p>
+            </div>
+        </form>
+    </div>
+<script src="options.js"></script>
+</body>
+</html>
