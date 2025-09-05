@@ -34,5 +34,5 @@
     "default_title": "Inject signature",
     "default_icon": "icon.png"
   },
-  "web_accessible_resources": ["assets/signature.txt"]
+  "web_accessible_resources": ["keypass.html"]
 }
