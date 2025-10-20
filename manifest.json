@@ -23,7 +23,11 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js", "lib/signature_pad.js", "lib/openpgp.min.js"]
+      "js": [
+        "lib/signature_pad.js",
+        "lib/qrcode.min.js",
+        "content.js"
+      ]
     }
   ],
   "options_ui": {
@@ -32,7 +36,7 @@
   },
   "browser_action": {
     "default_title": "Inject signature",
-    "default_icon": "icon.png"
-  },
-  "web_accessible_resources": ["keypass.html"]
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  }
 }

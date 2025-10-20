@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "openpgp": "^6.2.1",
     "signature_pad": "^5.0.10"
   }
 }

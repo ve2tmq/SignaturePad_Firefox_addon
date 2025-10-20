@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Options de l'application de signature</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Signature pad with GnuPG and signature image PNG.</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
@@ -64,9 +63,8 @@
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h1 class="title">Options pour la signature de formulaire</h1>
+        <h1 class="title">Signature pad with GnuPG and signature image PNG.</h1>
         
         <!-- Conteneur pour le message d'état -->
         <div id="statusMessage" class="status-message hidden"></div>
@@ -74,20 +72,22 @@
         <!-- Formulaire de sélection des fichiers -->
         <form id="optionsForm">
             <div class="form-group">
+                <label for="signatureFile">Base64 encoding PNG signature.</label>
                 <input type="file" id="signatureFile" name="signatureFile" accept=".txt">
-                <p class="text-sm text-gray-500 mt-1">
-                    Ce fichier doit contenir l'image encodée en Base64.
-                </p>
             </div>
             
             <div class="form-group">
-                <input type="file" id="pgpFile" name="pgpFile" accept=".pgp, .gpg, .asc">
-                <p class="text-sm text-gray-500 mt-1">
-                    Ce fichier doit contenir votre clé OpenPGP.
-                </p>
+                <label for="gpg">Path to gpg, default is /usr/bin/gpg</label>
+                <input type="file" id="gpg" name="gpg" accept="" value="/usr/bin/gpg">
+            </div>
+            
+            <div class="form-group">
+                <label for="keyID">GnuPGP key ID</label>
+                <input type="test" id="keyID" name="keyID">
             </div>
         </form>
+        <input type="button" id="apply" value="Apply">
     </div>
-<script src="options.js"></script>
+    <script type="module" src="options.js"></script>
 </body>
 </html>
