@@ -3,90 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signature pad with GnuPG and signature image PNG.</title>
+    <title>Configuration Signature</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .container {
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 24px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .title {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 24px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #4b5563;
-            margin-bottom: 8px;
-        }
-        input[type="file"] {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            background-color: #f9fafb;
-            color: #4b5563;
-        }
-        .status-message {
-            margin-top: 10px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-align: center;
-        }
-        .success {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        .error {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; }
+        .container { max-width: 500px; margin: 40px auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; text-align: center; }
+        label { display: block; font-weight: 500; margin-bottom: 8px; color: #4b5563; }
+        input[type="file"] { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb; }
+        button { width: 100%; margin-top: 20px; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .hidden { display: none; }
+        #statusMessage { margin-top: 15px; text-align: center; color: #059669; font-weight: 600; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="title">Signature pad with GnuPG and signature image PNG.</h1>
+        <h1>🖊️ Options de Signature</h1>
         
-        <!-- Conteneur pour le message d'état -->
-        <div id="statusMessage" class="status-message hidden"></div>
-
-        <!-- Formulaire de sélection des fichiers -->
         <form id="optionsForm">
             <div class="form-group">
-                <label for="signatureFile">Base64 encoding PNG signature.</label>
-                <input type="file" id="signatureFile" name="signatureFile" accept=".txt">
-            </div>
-            
-            <div class="form-group">
-                <label for="gpg">Path to gpg, default is /usr/bin/gpg</label>
-                <input type="file" id="gpg" name="gpg" accept="" value="/usr/bin/gpg">
-            </div>
-            
-            <div class="form-group">
-                <label for="keyID">GnuPGP key ID</label>
-                <input type="test" id="keyID" name="keyID">
+                <label for="signatureFile">Image de signature (PNG transparent en Base64 .txt)</label>
+                <input type="file" id="signatureFile" accept=".txt">
+                <p style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                   Optionnel : Une image visuelle à afficher à côté du QR Code FIDO2.
+                </p>
             </div>
         </form>
-        <input type="button" id="apply" value="Apply">
+        
+        <button id="apply">Sauvegarder</button>
+        <div id="statusMessage" class="hidden"></div>
     </div>
     <script type="module" src="options.js"></script>
 </body>

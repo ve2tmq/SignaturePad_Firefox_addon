@@ -1,12 +1,11 @@
 {
   "manifest_version": 2,
-  "name": "Signature Injector",
-  "version": "1.0",
-  "description": "Inject a signature onto a web page's canvas.",
+  "name": "FIDO2 Signature Injector",
+  "version": "2.0",
+  "description": "Signe numériquement un canvas avec une clé de sécurité (WebAuthn) et injecte un QR Code.",
   
-    "icons": {
+  "icons": {
     "16": "icon.png",
-    "32": "icon.png",
     "48": "icon.png",
     "128": "icon.png"
   },
@@ -14,12 +13,15 @@
   "permissions": [
     "activeTab",
     "contextMenus",
-    "storage",
+    "storage", 
     "<all_urls>"
+    // "nativeMessaging" est SUPPRIMÉ. Bon débarras !
   ],
+
   "background": {
     "scripts": ["background.js"]
   },
+
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -30,13 +32,15 @@
       ]
     }
   ],
+
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
   },
+
   "browser_action": {
-    "default_title": "Inject signature",
-    "default_icon": "icon.png",
-    "default_popup": "popup.html"
+    "default_title": "Signer avec FIDO2",
+    "default_icon": "icon.png"
+    // Plus besoin de popup.html pour demander le mot de passe !
   }
 }
