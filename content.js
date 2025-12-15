@@ -186,17 +186,17 @@ async function drawSignatureAndQR(canvas, qrData, pngBase64, padInstance) {
   ctx.mozImageSmoothingEnabled = false;
   ctx.webkitImageSmoothingEnabled = false;
 
-  const padding = 10;
+  const padding = 30;
   const objectSize = Math.min(width / 2 - padding, height - padding); 
 
   // --- A. QR GENERATION (HD) ---
   const tempDiv = document.createElement('div');
   
-  // Generate larger than needed (400px) for detail
+  // Generate larger than needed (500px) for detail
   new QRCode(tempDiv, {
     text: qrData,
-    width: 400,
-    height: 400,
+    width: 500,
+    height: 500,
     correctLevel: QRCode.CorrectLevel.L
   });
 
