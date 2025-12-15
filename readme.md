@@ -36,6 +36,23 @@ Standard FIDO2 is designed for Authentication (logging in). This tool repurposes
 
     The result is embedded in a QR Code and a JSON file.
 
+## 💡 Rationale: Why FIDO2?
+
+Why build a new signing tool when **PGP/GPG** and **X.509** (Smart Cards) already exist?
+Because modern web browsers have architecturally locked them out.
+
+### 🚫 The Problem with Existing Standards
+* **X.509 / Smart Cards:** Modern browsers (Firefox/Chrome) sandbox the cryptographic environment. They use client certificates for *Authentication* (mTLS) but generally block web pages from using them to sign arbitrary text data (to prevent fingerprinting and non-consensual signing). Implementing this today requires installing heavy "Middleware" drivers on every client machine.
+* **PGP / GPG:** It relies on local software and file management. It is not native to the web ecosystem and offers poor UX for non-technical users (managing keyrings, understanding public/private keys).
+
+### ✅ The FIDO2 Solution (This Project)
+**FIDO2 / WebAuthn** is the *only* cryptographic standard that is:
+1.  **Native:** Built into every modern browser (no drivers needed).
+2.  **Hardware-Backed:** Keys are generated and stored in the secure element (silicon), making them un-copyable.
+3.  **User-Interactive:** Requires "User Presence" (physical touch) for every signature, providing a legally robust "Proof of Intent" that software-based certificates cannot offer.
+
+**In short:** This project hacks the FIDO2 "Authentication" protocol to perform "Document Signing," reclaiming digital sovereignty without installing local software.
+
 🚀 Installation (Developer Mode)
 
 Currently, this extension is a "Proof of Concept" and is loaded via Firefox Debugging mode.

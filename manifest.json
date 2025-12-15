@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "FIDO2 Signature Injector",
   "version": "2.0",
-  "description": "Signe numériquement un canvas avec une clé de sécurité (WebAuthn) et injecte un QR Code.",
+  "description": "Digitally sign a canvas with a security key (WebAuthn) and inject a verification QR Code.",
   
   "icons": {
     "16": "icon.png",
@@ -15,8 +15,14 @@
     "contextMenus",
     "storage", 
     "<all_urls>"
-    // "nativeMessaging" est SUPPRIMÉ. Bon débarras !
   ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "fido2-signature@ve2tmq.local",
+      "strict_min_version": "113.0"
+    }
+  },
 
   "background": {
     "scripts": ["background.js"]
@@ -39,8 +45,7 @@
   },
 
   "browser_action": {
-    "default_title": "Signer avec FIDO2",
+    "default_title": "Sign with FIDO2",
     "default_icon": "icon.png"
-    // Plus besoin de popup.html pour demander le mot de passe !
   }
 }

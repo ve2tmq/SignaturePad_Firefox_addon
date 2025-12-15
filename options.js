@@ -1,35 +1,76 @@
-// options.js
+// options.js - FIDO2 Signature Injector Configuration
 
-document.getElementById("apply").addEventListener("click", async () => {
-  const signatureFileInput = document.getElementById('signatureFile');
-  const signatureFile = signatureFileInput.files[0];
-  const statusMsg = document.getElementById('statusMessage');
+const fileInput = document.getElementById('file-input');
+const previewImg = document.getElementById('signature-preview');
+const placeholder = document.getElementById('placeholder-text');
+const statusMsg = document.getElementById('status-msg');
+const clearBtn = document.getElementById('clear-btn');
 
-  let configToSave = {};
-
-  // Traitement du fichier de signature visuelle (si présent)
-  if (signatureFile) {
-    try {
-      const text = await signatureFile.text();
-      configToSave.signatureBase64 = text.trim();
-    } catch (e) {
-      console.error("Erreur lecture fichier:", e);
-      alert("Impossible de lire le fichier.");
-      return;
-    }
+// 1. On Load: Check if a signature is already saved
+document.addEventListener('DOMContentLoaded', async () => {
+  const stored = await browser.storage.local.get('signatureBase64');
+  if (stored.signatureBase64) {
+    showPreview(stored.signatureBase64);
   }
-
-  // Sauvegarde dans le storage local du navigateur
-  await browser.storage.local.set(configToSave);
-
-  // Feedback visuel
-  statusMsg.textContent = "✅ Configuration sauvegardée !";
-  statusMsg.classList.remove("hidden");
-  
-  setTimeout(() => {
-    statusMsg.classList.add("hidden");
-  }, 3000);
 });
 
-// Au chargement, on pourrait afficher qu'un fichier est déjà présent, 
-// mais pour la sécurité on ne peut pas pré-remplir un input file.
+// 2. Handle File Selection
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Security check: Limit size to ~500KB to prevent UI lag during injection
+  if (file.size > 500 * 1024) {
+    alert("Warning: The image is quite large (>500KB). It might slow down the signing process.");
+  }
+
+  const reader = new FileReader();
+
+  // Callback when file reading is complete (Base64 conversion)
+  reader.onload = (event) => {
+    const base64String = event.target.result;
+    
+    // Save the Base64 string to Firefox Local Storage
+    browser.storage.local.set({ signatureBase64: base64String }).then(() => {
+      showPreview(base64String);
+      showStatus("✅ Signature saved successfully!");
+    });
+  };
+
+  // Start reading the file as a Data URL (Base64)
+  reader.readAsDataURL(file);
+});
+
+// 3. Handle "Remove" Button
+clearBtn.addEventListener('click', () => {
+  // Confirm action with user
+  if (!confirm("Are you sure you want to remove your signature?")) return;
+
+  browser.storage.local.remove('signatureBase64').then(() => {
+    fileInput.value = ""; // Reset the file input
+    hidePreview();
+    showStatus("🗑️ Signature removed.");
+  });
+});
+
+// --- Utility Functions ---
+
+function showPreview(base64) {
+  previewImg.src = base64;
+  previewImg.style.display = 'inline-block';
+  placeholder.style.display = 'none';
+  clearBtn.style.display = 'inline-block';
+}
+
+function hidePreview() {
+  previewImg.src = '';
+  previewImg.style.display = 'none';
+  placeholder.style.display = 'inline-block';
+  clearBtn.style.display = 'none';
+}
+
+function showStatus(text) {
+  statusMsg.textContent = text;
+  // Clear the status message after 3 seconds
+  setTimeout(() => { statusMsg.textContent = ''; }, 3000);
+}

@@ -273,7 +273,7 @@ async function startSigningProcess(padInstance) {
   
   const payloadStr = JSON.stringify({
     ts: Math.floor(Date.now() / 1000),
-    txt: visibleText.substring(0, 50),
+    txt: visibleText,
     frm: allFormData
   });
 

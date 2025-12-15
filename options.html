@@ -1,39 +1,63 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuration Signature</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; }
-        .container { max-width: 500px; margin: 40px auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; text-align: center; }
-        label { display: block; font-weight: 500; margin-bottom: 8px; color: #4b5563; }
-        input[type="file"] { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb; }
-        button { width: 100%; margin-top: 20px; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        button:hover { background-color: #1d4ed8; }
-        .hidden { display: none; }
-        #statusMessage { margin-top: 15px; text-align: center; color: #059669; font-weight: 600; }
-    </style>
+  <meta charset="utf-8">
+  <title>Options - FIDO2 Signature Injector</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 500px; }
+    .container { display: flex; flex-direction: column; gap: 15px; }
+    label { font-weight: bold; }
+    .preview-box {
+      border: 2px dashed #ccc;
+      padding: 20px;
+      text-align: center;
+      margin-top: 10px;
+      background: #f9f9f9;
+    }
+    img#signature-preview {
+      max-width: 100%;
+      max-height: 150px;
+      display: none; /* Hidden by default */
+    }
+    .status { color: green; font-weight: bold; min-height: 20px; }
+    .danger-btn {
+      background: #dc2626; 
+      color: white; 
+      border: none; 
+      padding: 8px; 
+      cursor: pointer; 
+      display: none;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🖊️ Options de Signature</h1>
-        
-        <form id="optionsForm">
-            <div class="form-group">
-                <label for="signatureFile">Image de signature (PNG transparent en Base64 .txt)</label>
-                <input type="file" id="signatureFile" accept=".txt">
-                <p style="font-size: 0.8em; color: #666; margin-top: 5px;">
-                   Optionnel : Une image visuelle à afficher à côté du QR Code FIDO2.
-                </p>
-            </div>
-        </form>
-        
-        <button id="apply">Sauvegarder</button>
-        <div id="statusMessage" class="hidden"></div>
+
+  <h2>🖊️ Signature Configuration</h2>
+
+  <div class="container">
+    <p style="font-size: 0.9em; color: #555;">
+      Sign on paper, scan it and import to GIMP.  Remove background as transparent, then export as PNG.
+      Upload an image of your handwritten signature. It will be injected alongside the FIDO2 QR Code.
+    </p>
+
+    <div>
+      <label for="file-input">Import your signature.</label><br>
+      <input type="file" id="file-input" accept="image/png">
     </div>
-    <script type="module" src="options.js"></script>
+
+    <div class="preview-box">
+      <span id="placeholder-text">No signature saved</span>
+      <img id="signature-preview" alt="Signature Preview">
+    </div>
+
+    <div id="status-msg" class="status"></div>
+    
+    <button id="clear-btn" class="danger-btn">
+      🗑️ Remove signature
+    </button>
+  </div>
+
+  <script src="options.js"></script>
 </body>
 </html>
