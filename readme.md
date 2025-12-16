@@ -135,6 +135,22 @@ If even a single character in the document or the timestamp is modified, the too
 
     lib/: External dependencies (QRCode.js, SignaturePad).
 
+    
+## 🙏 Acknowledgments & Dependencies
+
+This project stands on the shoulders of giants. Special thanks to the authors of the following libraries used in this project:
+
+### Firefox Extension (JavaScript)
+* **[Signature Pad](https://github.com/szimek/signature_pad)** by Szymon Nowak  
+    *Used for the smooth signature drawing canvas.* (MIT License)
+* **[QRCode.js](https://github.com/davidshimjs/qrcodejs)** by David Shim  
+    *Used for generating the cryptographic QR Code purely client-side.* (MIT License)
+
+### Verification Scripts (Python)
+* **[python-fido2](https://github.com/Yubico/python-fido2)** by Yubico  
+    *The official FIDO2/WebAuthn library used to communicate with the security key and verify assertions.* (BSD-2-Clause / Apache-2.0)
+    
+
 📄 License
 
 MIT License. Feel free to fork, modify, and contribute.
