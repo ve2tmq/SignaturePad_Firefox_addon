@@ -181,7 +181,7 @@ def verify_document(qr_json_raw, proof_file_path):
 
         # --- 4. HASH CALCULATION & VERDICT ---
         # Reconstruct compact JSON string exactly as JS did
-        doc_string = json.dumps(doc_to_hash, separators=(',', ':'))
+        doc_string = json.dumps(doc_to_hash, separators=(',', ':'), ensure_ascii=False)
         my_hash_bytes = calculate_sha256(doc_string)
         my_hash_b64 = buffer_to_base64_ext(my_hash_bytes)
         
