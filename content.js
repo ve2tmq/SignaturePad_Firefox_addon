@@ -1,21 +1,41 @@
-// content.js - English Version
+// content.js - Version "Sharp QR" 🦅
 
-let signaturePad = null;
-let clickedCanvas = null;
+let clickedCanvas = null; 
 
-// --- 1. INJECTED SCRIPT (Attestation: None for lightweight QR) ---
+// =============================================================================
+// 🛡️ BOUCLIER GLOBAL (Empêche l'effacement au clic droit)
+// =============================================================================
+const blockSiteInterference = (e) => {
+    if (e.button === 2) {
+        if (e.target.tagName === "CANVAS") {
+            e.stopImmediatePropagation(); 
+            e.stopPropagation();
+        }
+    }
+};
+
+window.addEventListener("pointerdown", blockSiteInterference, true);
+window.addEventListener("mousedown", blockSiteInterference, true);
+window.addEventListener("touchstart", (e) => {
+    if (e.target.tagName === "CANVAS" && e.touches.length > 1) {
+        e.stopImmediatePropagation();
+    }
+}, true);
+
+// =============================================================================
+// 1. INJECTION SCRIPT
+// =============================================================================
 function injectScriptIntoDOM() {
   if (document.getElementById('fido-injector-script')) return;
-  
   const script = document.createElement('script');
-  
   script.id = 'fido-injector-script';
   script.src = browser.runtime.getURL("injected_fido.js");
   document.body.appendChild(script);
 }
 
-// --- 2. EXTENSION UTILS ---
-
+// =============================================================================
+// 2. EXTENSION UTILS
+// =============================================================================
 async function sha256(message) {
   const msgBuffer = new TextEncoder().encode(message);
   return await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -34,198 +54,229 @@ function downloadProof(dataObj) {
   const dataStr = JSON.stringify(dataObj, null, 2);
   const blob = new Blob([dataStr], {type: "application/json"});
   const url = URL.createObjectURL(blob);
-  
   const a = document.createElement("a");
   a.href = url;
-  // Translated filename
   a.download = `signature_proof_${new Date().toISOString().slice(0,19).replace(/:/g,"-")}.json`;
-  a.onclick = (e) => {
-    e.stopPropagation();
-    document.body.appendChild(a);
-  }
+  a.onclick = (e) => e.stopPropagation();
+  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 }
 
-// --- 3. DRAWER (WITH LIBRARY FIX) ---
+function loadImage(src) {
+  return new Promise((resolve) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => { console.warn("Image load failed"); resolve(null); };
+    img.src = src;
+  });
+}
 
-async function drawSignatureAndQR(canvas, qrData, pngBase64, padInstance) {
-  console.log("🎨 Starting HD drawing...");
+function generateQRImage(text, size) {
+  return new Promise((resolve) => {
+    try {
+        const tempDiv = document.createElement('div');
+        // On génère un QR sans marge pour maximiser la taille utile
+        new QRCode(tempDiv, { 
+            text: text, 
+            width: size, 
+            height: size, 
+            correctLevel: QRCode.CorrectLevel.L // Low error correction = Moins de densité = Plus lisible
+        });
+        setTimeout(() => {
+          const img = tempDiv.querySelector('img');
+          if (img && img.src) resolve(img.src);
+          else { const c = tempDiv.querySelector('canvas'); resolve(c ? c.toDataURL() : null); }
+        }, 100);
+    } catch (e) { resolve(null); }
+  });
+}
 
-  // 1. SUBMIT FIX (Invisible pixel for SignaturePad)
-  if (padInstance && typeof padInstance.fromData === 'function') {
-      padInstance.fromData([
-          { color: "rgba(0,0,0,0.01)", points: [{x: 1, y: 1}, {x: 2, y: 2}] }
+// =============================================================================
+// 3. LOGIQUE PRINCIPALE
+// =============================================================================
+
+async function startSigningProcess(canvas) {
+  try {
+      injectScriptIntoDOM();
+
+      const visibleText = document.body.innerText;
+      const allFormData = [];
+      document.querySelectorAll("form").forEach((form, index) => {
+        try {
+          const formData = new FormData(form);
+          if (typeof formData.entries === 'function') {
+              allFormData.push({ formIndex: index, data: Object.fromEntries(formData.entries()) });
+          }
+        } catch (e) {}
+      });
+      
+      const payloadStr = JSON.stringify({
+        ts: Math.floor(Date.now() / 1000),
+        txt: visibleText,
+        frm: allFormData
+      });
+
+      const [storage, challengeBuffer] = await Promise.all([
+        browser.storage.local.get("signatureBase64"),
+        sha256(payloadStr)
       ]);
-  }
+      
+      const pngSignature = storage.signatureBase64;
+      const challengeBase64 = bufferToBase64Ext(challengeBuffer);
+      const rpId = window.location.hostname;
 
-  const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
-  
-  // 2. IMAGE QUALITY: Disable smoothing for sharp QR pixels
-  ctx.imageSmoothingEnabled = false; 
-  ctx.mozImageSmoothingEnabled = false;
-  ctx.webkitImageSmoothingEnabled = false;
+      if (!pngSignature) {
+          alert("⚠️ Configurez votre signature dans les options d'abord !");
+          return;
+      }
 
-  const padding = 30;
-  const objectSize = Math.min(width / 2 - padding, height - padding); 
+      const rect = canvas.getBoundingClientRect();
+      const top = rect.top + window.scrollY + (rect.height/2) - 30;
+      const left = rect.left + window.scrollX + (rect.width/2) - 100;
 
-  // --- A. QR GENERATION (HD) ---
-  const tempDiv = document.createElement('div');
-  
-  // Generate larger than needed (500px) for detail
-  new QRCode(tempDiv, {
-    text: qrData,
-    width: 500,
-    height: 500,
-    correctLevel: QRCode.CorrectLevel.L
-  });
+      // --- LE HANDLER ---
+      const successHandler = async (e) => {
+        document.removeEventListener("FIDO_SUCCESS_RETURN", successHandler);
+        
+        try {
+            const payload = JSON.parse(e.detail);
+            const ctx = canvas.getContext('2d');
+            
+            // On génère le QR en haute résolution (500px) pour qu'il soit net à la source
+            const [imgSign, qrDataURL] = await Promise.all([
+                loadImage(pngSignature),
+                generateQRImage(JSON.stringify(payload.qr), 500) 
+            ]);
+            const imgQR = await loadImage(qrDataURL);
 
-  // Wait for rendering
-  await new Promise(resolve => setTimeout(resolve, 300));
+            // 1. DESSIN & COLORISATION
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // A. Signature (Vert SurveyJS)
+            if (imgSign) {
+                // On laisse plus de place à droite pour le QR (Largeur signature = 50%)
+                const signWidth = canvas.width * 0.50; 
+                const signHeight = canvas.height * 0.90; 
+                const signX = canvas.width * 0.02; 
+                const signRatio = imgSign.width / imgSign.height;
+                let dW = signWidth, dH = signWidth / signRatio;
+                if (dH > signHeight) { dH = signHeight; dW = dH * signRatio; }
+                
+                ctx.drawImage(imgSign, signX, (canvas.height - dH)/2, dW, dH);
+                
+                ctx.globalCompositeOperation = "source-in";
+                ctx.fillStyle = "#000000"; 
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = "source-over";
+            }
 
-  const generatedImg = tempDiv.querySelector('img');
-  
-  if (generatedImg) {
-    // Security Fix
-    generatedImg.crossOrigin = "Anonymous"; 
+            // Fond Blanc Général
+            ctx.globalCompositeOperation = "destination-over";
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = "source-over";
 
-    if (!generatedImg.complete) {
-        await new Promise(r => generatedImg.onload = r);
-    }
+            // B. QR Code (Optimisé pour la netteté)
+            if (imgQR) {
+                // On augmente la taille du QR à 45% du canvas
+                const qrBox = Math.min(canvas.width * 0.45, canvas.height * 0.95);
+                const qrX = canvas.width - qrBox - (canvas.width * 0.01); 
+                const qrY = (canvas.height - qrBox) / 4;
+                
+                // ⬜ FOND BLANC SOUS LE QR (Contraste max)
+                ctx.fillStyle = "white";
+                ctx.fillRect(qrX, qrY, qrBox, qrBox);
 
-    // 3. WHITE BACKGROUND (Contrast)
-    const qrX = width - objectSize - padding;
-    const qrY = (height - objectSize) / 2;
-    
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(qrX, qrY, objectSize, objectSize);
+                // 🦅 NETTETÉ MAXIMALE (Pixel Perfect)
+                // C'est ça qui empêche le QR d'être flou
+                ctx.imageSmoothingEnabled = false; 
+                
+                ctx.drawImage(imgQR, qrX, qrY, qrBox, qrBox);
+                
+                // On réactive le lissage pour le reste (si besoin)
+                ctx.imageSmoothingEnabled = true;
 
-    // 4. DRAW FINAL QR
-    ctx.drawImage(generatedImg, qrX, qrY, objectSize, objectSize);
-    
-  } else {
-    console.error("Impossible to generate QR image");
-    alert("Error: QR Code library unresponsive.");
-    return;
-  }
+                // Label
+                ctx.font = "bold 10px sans-serif";
+                ctx.fillStyle = "#000000";
+                ctx.textAlign = "center";
+                ctx.fillText("FIDO2 Signed", qrX + qrBox/2, qrY + qrBox + 10);
+            }
 
-  // --- B. DRAW PNG SIGNATURE ---
-  if (pngBase64) {
-    const imgSign = new Image();
-    imgSign.crossOrigin = "Anonymous";
-    
-    await new Promise((resolve) => {
-      imgSign.onload = resolve;
-      imgSign.src = pngBase64.startsWith('data:') ? pngBase64 : "data:image/png;base64," + pngBase64;
-    });
-    
-    const ratio = imgSign.width / imgSign.height;
-    let signH = objectSize;
-    let signW = signH * ratio;
-    
-    if (signW > (width / 2) - (padding * 2)) {
-        signW = (width / 2) - (padding * 2);
-        signH = signW / ratio;
-    }
-    
-    ctx.drawImage(imgSign, padding, (height - signH)/2, signW, signH);
-  }
+            // 2. FORCE SYNC
+            const finalDataURL = canvas.toDataURL("image/png");
+            try { canvas.value = finalDataURL; } catch(e) {}
 
-  // Legal Text
-  ctx.font = "bold 11px Arial";
-  ctx.fillStyle = "#000000";
-  const qrX = width - objectSize - padding;
-  const qrY = (height - objectSize) / 2;
-  ctx.fillText("FIDO2", qrX + (objectSize/2) - 15, qrY + objectSize + 12);
-  
-  console.log("✨ HD Drawing complete!");
-}
+            let hiddenInput = canvas.parentElement.querySelector('input') 
+                           || canvas.parentElement.parentElement.querySelector('input');
+            if (hiddenInput) {
+                hiddenInput.value = finalDataURL;
+                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
 
-async function startSigningProcess(padInstance) {
-  injectScriptIntoDOM();
+            // 3. WAKE UP CALL
+            const clientX = rect.left + 1;
+            const clientY = rect.top + 1;
+            const dispatchEvent = (type) => {
+                canvas.dispatchEvent(new MouseEvent(type, {
+                    bubbles: true, cancelable: true, view: window,
+                    clientX: clientX, clientY: clientY, buttons: 1
+                }));
+            };
+            dispatchEvent('mousedown');
+            dispatchEvent('mouseup'); 
+            dispatchEvent('click');
+            
+            canvas.dispatchEvent(new Event('change', { bubbles: true }));
+            canvas.dispatchEvent(new Event('input', { bubbles: true }));
 
-  const visibleText = document.body.innerText;
-  const allFormData = [];
-  document.querySelectorAll("form").forEach((form, index) => {
-    const formData = new FormData(form);
-    allFormData.push({ formIndex: index, data: Object.fromEntries(formData.entries()) });
-  });
-  
-  const payloadStr = JSON.stringify({
-    ts: Math.floor(Date.now() / 1000),
-    txt: visibleText,
-    frm: allFormData
-  });
+            // 4. PREUVE
+            downloadProof({ meta: payload.file, document: JSON.parse(payloadStr) });
+            
+        } catch (err) {
+            alert("Erreur: " + err.message);
+        }
+      };
+      
+      const errorHandler = (e) => {
+          document.removeEventListener("FIDO_ERROR_RETURN", errorHandler);
+          alert("Erreur FIDO: " + e.detail);
+      };
 
-  const [storage, challengeBuffer] = await Promise.all([
-    browser.storage.local.get("signatureBase64"),
-    sha256(payloadStr)
-  ]);
-  
-  const pngSignature = storage.signatureBase64;
-  const challengeBase64 = bufferToBase64Ext(challengeBuffer);
-  const rpId = window.location.hostname;
+      document.addEventListener("FIDO_SUCCESS_RETURN", successHandler);
+      document.addEventListener("FIDO_ERROR_RETURN", errorHandler);
 
-  const canvas = padInstance.canvas;
-  const rect = canvas.getBoundingClientRect();
-  const top = rect.top + window.scrollY + (rect.height/2) - 30;
-  const left = rect.left + window.scrollX + (rect.width/2) - 100;
-
-  const successHandler = async (e) => {
-    document.removeEventListener("FIDO_SUCCESS_RETURN", successHandler);
-    
-    const payload = JSON.parse(e.detail);
-    
-    // Convert object back to string for the QR library
-    const qrText = JSON.stringify(payload.qr);
-
-    // 1. Draw
-    await drawSignatureAndQR(canvas, qrText, pngSignature, padInstance);
-    
-    // 2. Proof File Preparation
-    const proofObject = {
-        meta: payload.file,
-        document: JSON.parse(payloadStr)
-    };
-    
-    console.log("⬇️ Downloading full proof...");
-    downloadProof(proofObject);
-  };
-  
-  const errorHandler = (e) => {
-      document.removeEventListener("FIDO_ERROR_RETURN", errorHandler);
-      alert("Error: " + e.detail);
-  };
-
-  document.addEventListener("FIDO_SUCCESS_RETURN", successHandler);
-  document.addEventListener("FIDO_ERROR_RETURN", errorHandler);
-
-  if (window.wrappedJSObject && window.wrappedJSObject.spawnFidoButton) {
-    window.wrappedJSObject.spawnFidoButton(challengeBase64, rpId, top, left);
-  } else {
-    const scriptVar = document.createElement('script');
-    scriptVar.textContent = `window.spawnFidoButton('${challengeBase64}', '${rpId}', ${top}, ${left});`;
-    document.body.appendChild(scriptVar);
-    setTimeout(() => scriptVar.remove(), 100);
+      if (window.wrappedJSObject && window.wrappedJSObject.spawnFidoButton) {
+        window.wrappedJSObject.spawnFidoButton(challengeBase64, rpId, top, left);
+      } else {
+        const scriptVar = document.createElement('script');
+        scriptVar.textContent = `window.spawnFidoButton('${challengeBase64}', '${rpId}', ${top}, ${left});`;
+        document.body.appendChild(scriptVar);
+        setTimeout(() => scriptVar.remove(), 100);
+      }
+  } catch (globalErr) {
+      console.error(globalErr);
   }
 }
 
-document.addEventListener("contextmenu", (event) => {
+// 4. LISTENER EXTENSION
+window.addEventListener("contextmenu", (event) => {
   if (event.target.tagName === "CANVAS") {
     clickedCanvas = event.target;
-    signaturePad = new SignaturePad(clickedCanvas);
+    // Pas de new SignaturePad() ici !
   }
-});
+}, true);
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "injectSignature") {
-    if (signaturePad) {
-      startSigningProcess(signaturePad);
+    if (clickedCanvas) {
+        startSigningProcess(clickedCanvas);
     } else {
-      alert("Error: Right-click on the canvas is required.");
+        alert("Veuillez faire un clic droit sur la zone de signature.");
     }
   }
 });

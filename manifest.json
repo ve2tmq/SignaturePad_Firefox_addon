@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "FIDO2 Signature Injector",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Digitally sign a canvas with a security key (WebAuthn) and inject a verification QR Code.",
   
   "icons": {
